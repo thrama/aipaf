@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aipaf"
+dynamic = ["version"]
+description = "AIPAF — AI Project Assessment Framework Agent"
+authors = [{ name = "Lorenzo Lombardi" }]
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+keywords = ["ai-governance", "eu-ai-act", "nist-ai-rmf", "iso-42001", "risk-assessment", "responsible-ai"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.urls]
+Homepage   = "https://github.com/thrama/aipaf"
+Repository = "https://github.com/thrama/aipaf"
+Changelog  = "https://github.com/thrama/aipaf/blob/main/CHANGELOG.md"
+Issues     = "https://github.com/thrama/aipaf/issues"
+
+dependencies = [
+    "pydantic>=2.6",
+    "typer>=0.12",
+    "typing-extensions>=4.9",
+    "requests>=2.31",          # Ollama provider
+    "chromadb>=1.0",           # RAG vector store
+    "pypdf>=4.0",              # PDF ingestion
+    "python-docx>=1.1",        # DOCX ingestion
+    "ollama>=0.4",             # richiesto da chromadb OllamaEmbeddingFunction (RAG in produzione)
+    "python-dotenv>=1.0",      # carica .env all'avvio di CLI e notebook
+]
+
+[project.optional-dependencies]
+notebook = [
+    "jupyter>=1.0",
+    "ipykernel>=6.0",
+    "ipywidgets>=8.0",
+    "matplotlib>=3.8",
+    "pandas>=2.0",
+    "seaborn>=0.13",
+]
+claude = ["anthropic>=1.0"]      # SDK 1.x: nessun parametro di sampling (vedi CHANGELOG 0.2.3)
+dev   = ["pytest>=8.0", "pytest-cov", "ruff", "mypy", "pre-commit", "nbstripout"]
+
+[project.scripts]
+aipaf = "aipaf.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["aipaf*"]
+
+[tool.setuptools.package-data]
+aipaf = ["config/*.json"]
+
+[tool.setuptools.dynamic]
+version = { attr = "aipaf.__version__" }
+
+[tool.pytest.ini_options]
+testpaths  = ["tests"]
+addopts    = "-v --tb=short"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# Regole pinnate: i default cambiano tra versioni di ruff e romperebbero la CI.
+select = ["E4", "E7", "E9", "F"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+ignore_missing_imports = true

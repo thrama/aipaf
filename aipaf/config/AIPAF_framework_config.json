@@ -1,0 +1,803 @@
+{
+  "framework": {
+    "name": "AIPAF",
+    "full_name": "AI Project Assessment Framework",
+    "version": "1.4",
+    "author": "Lorenzo Lombardi",
+    "references": [
+      "NIST AI RMF 1.0",
+      "ISO/IEC 42001:2023",
+      "EU AI Act — Regolamento (UE) 2024/1689",
+      "IBM Guide for Implementing an AI Governance Framework (2025)",
+      "Anthropic Responsible Scaling Policy v3.0 (2026)",
+      "GDPR — Regolamento (UE) 2016/679",
+      "iKN Italy / Casaleggio Associati — AI TCO 2026"
+    ]
+  },
+  "scoring_scale": {
+    "description": "Scala 0-3 per criterio. Aggregazione: media pesata intra-dimensione, poi composito cross-dimensionale.",
+    "levels": [
+      {
+        "score": 3,
+        "label": "Excellent",
+        "description": "Criterio pienamente soddisfatto con best practice. Evidenze documentate. Pronto per audit."
+      },
+      {
+        "score": 2,
+        "label": "Adequate",
+        "description": "Parzialmente soddisfatto. Gap identificati con remediation plan. Accettabile con condizioni."
+      },
+      {
+        "score": 1,
+        "label": "Insufficient",
+        "description": "Gap significativi. Remediation necessario prima di procedere. Rischio medio-alto."
+      },
+      {
+        "score": 0,
+        "label": "Critical",
+        "description": "Non soddisfatto. Rischio elevato. Stop obbligatorio senza intervento sostanziale."
+      }
+    ],
+    "confidence_modifier": {
+      "description": "Moltiplicatore applicato allo score in base alla qualità dell'evidenza fornita.",
+      "H": {
+        "label": "High",
+        "multiplier": 1.0,
+        "condition": "Evidenza documentata verificabile"
+      },
+      "M": {
+        "label": "Medium",
+        "multiplier": 0.8,
+        "condition": "Auto-dichiarazione senza prove documentali"
+      },
+      "L": {
+        "label": "Low",
+        "multiplier": 0.0,
+        "condition": "Stima o assenza di dato — score azzerato, flag 'data needed'"
+      }
+    }
+  },
+  "approval_gates": {
+    "GREEN": {
+      "condition": "composite_score >= 2.0 AND no_dimension_below_0_5",
+      "decision": "Progetto può procedere",
+      "action": "Nessuna azione bloccante. Review periodiche."
+    },
+    "YELLOW": {
+      "condition": "composite_score >= 1.0 AND no_dimension_below_0_5",
+      "decision": "Procede con condizioni",
+      "action": "Remediation plan obbligatorio. Re-assessment entro 30 giorni."
+    },
+    "RED": {
+      "condition": "composite_score < 1.0 OR any_dimension_below_0_5",
+      "decision": "Rework sostanziale richiesto",
+      "action": "Stop. Rework e re-assessment completo."
+    }
+  },
+  "sector_weights": {
+    "description": "Pesi percentuali per dimensione, configurabili per settore.",
+    "sectors": {
+      "default": {
+        "D1": 20,
+        "D2": 20,
+        "D3": 20,
+        "D4": 15,
+        "D5": 10,
+        "D6": 15
+      },
+      "banking_finance": {
+        "D1": 15,
+        "D2": 30,
+        "D3": 20,
+        "D4": 10,
+        "D5": 10,
+        "D6": 15
+      },
+      "healthcare": {
+        "D1": 15,
+        "D2": 25,
+        "D3": 20,
+        "D4": 10,
+        "D5": 15,
+        "D6": 15
+      },
+      "manufacturing": {
+        "D1": 25,
+        "D2": 15,
+        "D3": 15,
+        "D4": 20,
+        "D5": 10,
+        "D6": 15
+      },
+      "public_admin": {
+        "D1": 15,
+        "D2": 25,
+        "D3": 15,
+        "D4": 10,
+        "D5": 20,
+        "D6": 15
+      },
+      "media_telecom": {
+        "D1": 25,
+        "D2": 15,
+        "D3": 20,
+        "D4": 15,
+        "D5": 10,
+        "D6": 15
+      }
+    }
+  },
+  "eu_ai_act_classification": {
+    "description": "Decision tree preliminare per classificazione EU AI Act. Valutare in sequenza; fermarsi alla prima condizione vera.",
+    "levels": [
+      {
+        "level": "UNACCEPTABLE",
+        "color": "BLACK",
+        "description": "Pratiche vietate — Art. 5 EU AI Act",
+        "action": "STOP IMMEDIATO. Il sistema non può essere sviluppato né deployato nell'UE.",
+        "triggers": [
+          "Manipolazione subliminale o tecniche ingannevoli",
+          "Sfruttamento di vulnerabilità di specifici gruppi",
+          "Social scoring da parte di autorità pubbliche",
+          "Identificazione biometrica real-time in spazi pubblici (salvo eccezioni)"
+        ]
+      },
+      {
+        "level": "HIGH_RISK",
+        "color": "RED",
+        "description": "Allegato III EU AI Act — obblighi estesi (Art. 9-15)",
+        "action": "Procedere solo con piena compliance. Obblighi: risk management system, data governance, technical documentation, transparency, human oversight, accuracy/robustness/cybersecurity.",
+        "triggers": [
+          "Infrastrutture critiche",
+          "Istruzione e formazione professionale",
+          "Occupazione e gestione dei lavoratori",
+          "Accesso a servizi pubblici essenziali e privati",
+          "Attività di contrasto",
+          "Migrazione, asilo e controllo delle frontiere",
+          "Amministrazione della giustizia",
+          "Sistemi biometrici non vietati"
+        ]
+      },
+      {
+        "level": "LIMITED_RISK",
+        "color": "YELLOW",
+        "description": "Obblighi di trasparenza — Art. 50 EU AI Act",
+        "action": "Obbligatorio informare gli utenti che interagiscono con AI.",
+        "triggers": [
+          "Chatbot e sistemi conversazionali",
+          "Generazione di contenuti deepfake",
+          "Sistemi che generano contenuti che potrebbero essere scambiati per prodotti umani"
+        ]
+      },
+      {
+        "level": "MINIMAL_RISK",
+        "color": "GREEN",
+        "description": "Nessun obbligo normativo specifico EU AI Act. Codici di condotta volontari raccomandati.",
+        "action": "Procedere con best practice volontarie.",
+        "triggers": [
+          "Tutti i sistemi AI non rientranti nelle categorie precedenti"
+        ]
+      }
+    ]
+  },
+  "dimensions": [
+    {
+      "id": "D1",
+      "name": "Strategic Alignment & Business Value",
+      "description": "Valuta il grado di allineamento del progetto AI con la strategia aziendale e il valore di business atteso.",
+      "implicit_purpose": "Filtro anti-vanity project: niente AI senza business case solido.",
+      "compiled_by": "Business Owner + Executive Sponsor",
+      "criteria": [
+        {
+          "id": "D1.C1",
+          "name": "Chiarezza del problema di business",
+          "description": "Problema definito con precisione, anche attraverso la definizione degli use case, e metriche di successo chiare.",
+          "weight_pct": 25,
+          "source": "NIST AI RMF 1.0 — MAP 1.4",
+          "question_id": "D1.Q1",
+          "scoring_guide": {
+            "3": "Problem statement documentato e approvato, use case specifici con KPI misurabili.",
+            "2": "Problema descritto chiaramente, metriche identificate ma non formalizzate.",
+            "1": "Problema vago o generico, metriche assenti o non misurabili.",
+            "0": "Nessuna definizione del problema. Progetto avviato per pressione esterna o moda."
+          }
+        },
+        {
+          "id": "D1.C2",
+          "name": "ROI atteso e misurabilità",
+          "description": "Proiezioni quantitative di ROI con metriche tracciabili.",
+          "weight_pct": 25,
+          "source": "IBM Guide for Implementing an AI Governance Framework (2025)",
+          "question_id": "D1.Q2",
+          "flags": [
+            "Se TCO composto solo da licenze/cloud → warning TCO incompleto (ref. iKN Italy 2026)"
+          ],
+          "scoring_guide": {
+            "3": "Business case con ROI quantificato, metriche di tracking definite e strumento di monitoraggio identificato.",
+            "2": "ROI stimato ma con ipotesi poco verificate, metriche parzialmente definite.",
+            "1": "Benefici solo qualitativi, nessuna metrica di tracking.",
+            "0": "Nessun business case. ROI non valutato."
+          }
+        },
+        {
+          "id": "D1.C3",
+          "name": "Sponsorship e ownership",
+          "description": "Executive sponsor e business owner identificati.",
+          "weight_pct": 20,
+          "source": "ISO/IEC 42001:2023 — Clausole 5.1, 5.3",
+          "question_id": "D1.Q3",
+          "scoring_guide": {
+            "3": "Executive sponsor e business owner con mandato formale documentato.",
+            "2": "Ruoli identificati informalmente, mandato non formalizzato.",
+            "1": "Un solo ruolo identificato o sponsor nominale non operativo.",
+            "0": "Nessun sponsor. Progetto orfano."
+          }
+        },
+        {
+          "id": "D1.C4",
+          "name": "Coerenza con roadmap digitale",
+          "description": "Inserimento nella strategia digitale e roadmap tecnologica.",
+          "weight_pct": 15,
+          "source": "NIST AI RMF 1.0 — GOVERN 1.4",
+          "question_id": "D1.Q4",
+          "scoring_guide": {
+            "3": "Progetto nel piano strategico con priorità e budget allocato.",
+            "2": "Allineato informalmente, non ancora in documenti di piano.",
+            "1": "Iniziativa parallela non coordinata con roadmap.",
+            "0": "In contrasto con priorità strategiche o nessuna roadmap esistente."
+          }
+        },
+        {
+          "id": "D1.C5",
+          "name": "Impatto su KPI aziendali",
+          "description": "Impatto positivo su KPI misurabili (revenue, costi, NPS).",
+          "weight_pct": 15,
+          "source": "IBM Guide for Implementing an AI Governance Framework (2025)",
+          "question_id": "D1.Q5",
+          "scoring_guide": {
+            "3": "KPI identificati, misurati, con baseline disponibile e target definito.",
+            "2": "KPI identificati ma baseline non disponibile.",
+            "1": "Impatto qualitativo senza KPI formali.",
+            "0": "Nessun collegamento a KPI aziendali."
+          }
+        }
+      ]
+    },
+    {
+      "id": "D2",
+      "name": "Risk Classification & Regulatory Compliance",
+      "description": "Classifica il livello di rischio secondo l'EU AI Act e valuta la conformità regolatoria.",
+      "implicit_purpose": "Scudo legale e reputazionale. Sanzioni fino al 7% del fatturato globale.",
+      "compiled_by": "Legal / Compliance + DPO",
+      "criteria": [
+        {
+          "id": "D2.C1",
+          "name": "Classificazione rischio EU AI Act",
+          "description": "Classificazione corretta nei 4 livelli di rischio.",
+          "weight_pct": 30,
+          "source": "EU AI Act — Titolo III, Capo 1, Art. 6",
+          "question_id": "D2.Q1",
+          "flags": [
+            "HIGH RISK → attivare lista obblighi Art. 9-15 EU AI Act"
+          ],
+          "scoring_guide": {
+            "3": "Classificazione formale documentata, validata da Legal/DPO, con riferimenti normativi specifici.",
+            "2": "Classificazione effettuata ma non formalizzata o non validata.",
+            "1": "Classificazione approssimativa senza analisi strutturata.",
+            "0": "Nessuna classificazione. Rischio normativo non valutato."
+          }
+        },
+        {
+          "id": "D2.C2",
+          "name": "Conformità GDPR",
+          "description": "Trattamento dati personali conforme, DPIA dove necessario.",
+          "weight_pct": 25,
+          "source": "GDPR — Art. 5, Art. 25, Art. 35",
+          "question_id": "D2.Q2",
+          "skip_condition": "personal_data_treated == false",
+          "scoring_guide": {
+            "3": "DPIA condotta e documentata, basi giuridiche identificate, diritti degli interessati implementati.",
+            "2": "DPIA avviata ma non conclusa, o basi giuridiche identificate ma diritti non implementati.",
+            "1": "Consapevolezza GDPR ma nessuna azione concreta.",
+            "0": "Nessuna valutazione GDPR. Trattamento senza base giuridica identificata."
+          }
+        },
+        {
+          "id": "D2.C3",
+          "name": "Obblighi settoriali",
+          "description": "Mappatura completa degli obblighi regolatori di settore.",
+          "weight_pct": 20,
+          "source": "NIST AI RMF 1.0 — MAP 1.1",
+          "question_id": "D2.Q3",
+          "scoring_guide": {
+            "3": "Tutti gli obblighi settoriali identificati, mappati, con responsabile assegnato.",
+            "2": "Normative identificate ma mappatura incompleta.",
+            "1": "Consapevolezza generica senza analisi specifica.",
+            "0": "Nessuna analisi di obblighi settoriali."
+          }
+        },
+        {
+          "id": "D2.C4",
+          "name": "Risk Register",
+          "description": "Registro rischi con piani di mitigazione per ogni rischio.",
+          "weight_pct": 15,
+          "source": "IBM Guide (2025), NIST AI RMF 1.0",
+          "question_id": "D2.Q4",
+          "scoring_guide": {
+            "3": "Risk register strutturato, rischi classificati, piani di mitigazione e owner per ogni rischio.",
+            "2": "Risk register esistente ma incompleto.",
+            "1": "Lista rischi informale senza struttura.",
+            "0": "Nessun risk register."
+          }
+        },
+        {
+          "id": "D2.C5",
+          "name": "Audit trail e documentazione",
+          "description": "Documentazione conforme (technical doc, factsheets).",
+          "weight_pct": 10,
+          "source": "ISO/IEC 42001:2023 — Clausola 7.5, Appendice A.6.2.7",
+          "question_id": "D2.Q5",
+          "scoring_guide": {
+            "3": "Documentazione tecnica completa, log di audit attivi e conformi a policy retention.",
+            "2": "Documentazione parziale o log non strutturati per audit esterno.",
+            "1": "Documentazione minimale, log non strutturati.",
+            "0": "Nessuna documentazione. Nessun log."
+          }
+        }
+      ]
+    },
+    {
+      "id": "D3",
+      "name": "Data Readiness & Governance",
+      "description": "Valuta maturità e qualità dei dati. La maggior parte dei fallimenti AI è riconducibile a problemi di dati, non di modelli.",
+      "implicit_purpose": "Filtro anti-garbage-in: la maggior parte dei fallimenti nasce dai dati.",
+      "compiled_by": "Data Engineer + Data Governance Lead",
+      "criteria": [
+        {
+          "id": "D3.C1",
+          "name": "Qualità dei dati",
+          "description": "Dati accurati, completi, consistenti con metriche DQ misurate.",
+          "weight_pct": 25,
+          "source": "ISO/IEC 42001:2023 — Appendice A.7.4",
+          "question_id": "D3.Q1",
+          "scoring_guide": {
+            "3": "Profiling DQ eseguito, metriche documentate, problemi identificati e in remediation.",
+            "2": "Profiling parziale, problemi noti ma non tutti gestiti.",
+            "1": "Valutazione qualitativa senza metriche misurate.",
+            "0": "Nessuna valutazione di qualità. Dati non profilati."
+          }
+        },
+        {
+          "id": "D3.C2",
+          "name": "Disponibilità, accessibilità e rilevanza temporale",
+          "description": "Dati disponibili e integrabili nei tempi del progetto; freshness e finestra di rilevanza temporale coerenti con i requisiti del caso d'uso.",
+          "weight_pct": 20,
+          "source": "NIST AI RMF 1.0 — MAP 2.3",
+          "question_id": "D3.Q2",
+          "scoring_guide": {
+            "3": "Dati disponibili, accessibili, finestra temporale verificata e coerente, requisiti di freshness soddisfatti.",
+            "2": "Dati disponibili ma accesso parziale o finestra non completamente verificata.",
+            "1": "Dati in parte non disponibili o finestra temporale insufficiente.",
+            "0": "Dati non disponibili o freshness evidentemente inadeguata."
+          }
+        },
+        {
+          "id": "D3.C3",
+          "name": "Metadata management, lineage e catalogazione",
+          "description": "Metadata management strutturato, lineage end-to-end dalle sorgenti al modello, dataset catalogati con metadati business e tecnici.",
+          "weight_pct": 20,
+          "source": "IBM Guide for Implementing an AI Governance Framework (2025)",
+          "question_id": "D3.Q3",
+          "notes": "Se l'organizzazione usa Informatica IDMC/EDC/Axon, verificare copertura dataset AI nel catalog esistente.",
+          "scoring_guide": {
+            "3": "Dataset catalogati con metadati completi, lineage end-to-end documentato, catalog aggiornato.",
+            "2": "Catalogazione parziale o lineage solo per dataset principali.",
+            "1": "Nessun catalog formale, lineage ricostruibile solo informalmente.",
+            "0": "Nessuna catalogazione. Lineage non documentato."
+          }
+        },
+        {
+          "id": "D3.C4",
+          "name": "Privacy by design",
+          "description": "Privacy by design/default, pseudonimizzazione dove necessario.",
+          "weight_pct": 20,
+          "source": "GDPR — Art. 25",
+          "question_id": "D3.Q4",
+          "skip_condition": "personal_data_treated == false",
+          "scoring_guide": {
+            "3": "Privacy by design documentata, tecniche applicate, motivazione documentata dove non applicabili.",
+            "2": "Privacy considerata ma non formalizzata come requisito di progetto.",
+            "1": "Privacy solo come compliance ex-post, non integrata nella progettazione.",
+            "0": "Privacy non considerata. Dati personali senza misure di protezione."
+          }
+        },
+        {
+          "id": "D3.C5",
+          "name": "Data contracts e SLA",
+          "description": "Data contracts con SLA misurabili su qualità, freshness (con soglie esplicite) e availability.",
+          "weight_pct": 15,
+          "source": "ISO/IEC 42001:2023 — Appendice A.10.3",
+          "question_id": "D3.Q5",
+          "scoring_guide": {
+            "3": "Data contracts formalizzati con SLA numerici su qualità, freshness e availability. Monitoring attivo.",
+            "2": "Accordi informali o SLA parziali.",
+            "1": "Nessun data contract, dipendenze gestite informalmente.",
+            "0": "Nessun accordo sui dati. Dipendenze non gestite."
+          }
+        }
+      ]
+    },
+    {
+      "id": "D4",
+      "name": "Technical Feasibility & Architecture",
+      "description": "Copre fattibilità tecnica, dall'architettura alla scalabilità e integrabilità con l'ecosistema esistente.",
+      "implicit_purpose": "Realismo tecnico: verificare che l'AI sia davvero la soluzione giusta.",
+      "compiled_by": "Solution Architect + ML Engineer",
+      "criteria": [
+        {
+          "id": "D4.C1",
+          "name": "Maturità del modello",
+          "description": "Stato (PoC, MVP, produzione) coerente con obiettivi e timeline.",
+          "weight_pct": 20,
+          "source": "NIST AI RMF 1.0 — MEASURE 2",
+          "question_id": "D4.Q1",
+          "scoring_guide": {
+            "3": "Modello in stato coerente con obiettivi, validato su dati reali, performance documentate.",
+            "2": "Modello funzionante ma validato solo su subset limitato o in ritardo.",
+            "1": "PoC non completato o risultati non rappresentativi.",
+            "0": "Nessun modello sviluppato o non funzionante."
+          }
+        },
+        {
+          "id": "D4.C2",
+          "name": "Scalabilità e performance",
+          "description": "Architettura che supporta volumi di produzione attesi.",
+          "weight_pct": 20,
+          "source": "ISO/IEC 42001:2023 — Appendice A.6.2.2",
+          "question_id": "D4.Q2",
+          "scoring_guide": {
+            "3": "Stress test condotti, SLA di performance definiti e verificati, capacity plan documentato.",
+            "2": "Architettura progettata per scalabilità ma stress test non condotti.",
+            "1": "Scalabilità non validata, architettura per PoC non per produzione.",
+            "0": "Nessuna considerazione di scalabilità."
+          }
+        },
+        {
+          "id": "D4.C3",
+          "name": "Integrabilità",
+          "description": "Integrazione con ecosistema (API, piattaforme dati, CI/CD).",
+          "weight_pct": 20,
+          "source": "IBM Guide for Implementing an AI Governance Framework (2025)",
+          "question_id": "D4.Q3",
+          "scoring_guide": {
+            "3": "Integrazioni progettate, documentate e testate. CI/CD attiva, dipendenze mappate.",
+            "2": "Integrazioni principali identificate, alcune testate.",
+            "1": "Integrazioni identificate ma non ancora progettate.",
+            "0": "Sistema sviluppato in isolamento senza valutazione integrazioni."
+          }
+        },
+        {
+          "id": "D4.C4",
+          "name": "Spiegabilità e riproducibilità",
+          "description": "Risultati spiegabili e riproducibili con documentazione.",
+          "weight_pct": 20,
+          "source": "NIST AI RMF 1.0, Anthropic RSP v3.0 — Sezione 3",
+          "question_id": "D4.Q4",
+          "flags": [
+            "HIGH RISK + score < 2 → RED FLAG normativo (Art. 13 EU AI Act — trasparenza)"
+          ],
+          "scoring_guide": {
+            "3": "Output spiegabili con tecnica documentata, riproducibilità garantita da versioning e seed management.",
+            "2": "Spiegabilità parziale o riproducibilità garantita ma non documentata.",
+            "1": "Spiegabilità limitata, riproducibilità non verificata.",
+            "0": "Black box senza spiegabilità. Output non riproducibili."
+          }
+        },
+        {
+          "id": "D4.C5",
+          "name": "Costi infrastrutturali",
+          "description": "Costi compute, storage, licenze stimati, sostenibili e tracciabili con trasparenza su TCO e modello di allocazione.",
+          "weight_pct": 10,
+          "source": "IBM Guide for Implementing an AI Governance Framework (2025)",
+          "question_id": "D4.Q5",
+          "scoring_guide": {
+            "3": "TCO completo stimato (incluse voci nascoste), modello allocazione definito, sostenibilità verificata.",
+            "2": "Stima infrastruttura disponibile ma TCO incompleto.",
+            "1": "Solo stima cloud/licenze. TCO non valutato.",
+            "0": "Nessuna stima dei costi. Budget non definito."
+          }
+        },
+        {
+          "id": "D4.C6",
+          "name": "Efficacia marginale AI vs baseline",
+          "description": "Valutazione del vantaggio reale dell'approccio AI rispetto a soluzioni tradizionali (regole, euristiche, modelli statistici), con benchmark misurabili.",
+          "weight_pct": 10,
+          "source": "NIST AI RMF 1.0 — MEASURE 2.5",
+          "question_id": "D4.Q6",
+          "flags": [
+            "score 0 o 1 → WARNING: Rischio vanity AI project. Valutare se soluzione rule-based è più efficiente."
+          ],
+          "scoring_guide": {
+            "3": "Benchmark condotto con baseline esplicita, vantaggio AI misurato su metriche comparabili.",
+            "2": "Valutazione qualitativa del vantaggio AI senza benchmark formale.",
+            "1": "AI scelta senza confronto con alternative.",
+            "0": "Approccio AI dato per scontato. Nessuna valutazione."
+          }
+        }
+      ]
+    },
+    {
+      "id": "D5",
+      "name": "Ethical & Responsible AI",
+      "description": "Valuta aspetti etici e di AI responsabile, ispirandosi ad Anthropic RSP e ISO 42001.",
+      "implicit_purpose": "Licenza sociale: l'AI deve essere accettabile per chi la subisce.",
+      "compiled_by": "AI Ethics Lead + DPO + HR (per impatto occupazionale)",
+      "criteria": [
+        {
+          "id": "D5.C1",
+          "name": "Bias assessment",
+          "description": "Analisi bias su dati training e output con metriche fairness.",
+          "weight_pct": 25,
+          "source": "NIST AI RMF 1.0 — Sezione 3.7, IBM Guide (2025)",
+          "question_id": "D5.Q1",
+          "scoring_guide": {
+            "3": "Bias assessment con metriche fairness documentate, bias identificati e in remediation.",
+            "2": "Analisi su subset o metriche parziali, piano di mitigazione non formalizzato.",
+            "1": "Consapevolezza del rischio ma nessuna analisi condotta.",
+            "0": "Nessuna valutazione di bias."
+          }
+        },
+        {
+          "id": "D5.C2",
+          "name": "Trasparenza e comunicazione",
+          "description": "Utenti informati dell'interazione AI e sue limitazioni.",
+          "weight_pct": 20,
+          "source": "EU AI Act — Art. 50",
+          "question_id": "D5.Q2",
+          "flags": [
+            "LIMITED o HIGH RISK + score < 2 → RED FLAG normativo (Art. 50 EU AI Act)"
+          ],
+          "scoring_guide": {
+            "3": "Utenti informati chiaramente, limitazioni comunicate, disclaimer implementato.",
+            "2": "Informazione prevista ma non ancora implementata o difficilmente accessibile.",
+            "1": "Trasparenza pianificata vagamente. Utenti non ancora informati.",
+            "0": "Sistema AI non dichiarato come tale agli utenti."
+          }
+        },
+        {
+          "id": "D5.C3",
+          "name": "Human-in-the-loop",
+          "description": "Supervisione umana proporzionale al rischio, con escalation.",
+          "weight_pct": 25,
+          "source": "EU AI Act — Art. 14, ISO/IEC 42001:2023 — Clausola 8.4",
+          "question_id": "D5.Q3",
+          "flags": [
+            "HIGH RISK + score < 2 → RED FLAG OBBLIGATORIO (Art. 14 EU AI Act)"
+          ],
+          "scoring_guide": {
+            "3": "HITL definito formalmente, proporzionale al risk level, escalation documentata e testata.",
+            "2": "HITL previsto ma non formalizzato o escalation non testata.",
+            "1": "Supervisione menzionata ma non strutturata. Nessun processo di escalation.",
+            "0": "Nessuna supervisione umana. Sistema completamente autonomo su decisioni ad impatto."
+          }
+        },
+        {
+          "id": "D5.C4",
+          "name": "Impatto sociale e occupazionale",
+          "description": "Valutazione impatto occupazionale, reskilling/upskilling, allineamento con il codice etico aziendale.",
+          "weight_pct": 10,
+          "source": "ISO/IEC 42001:2023 — Appendice B.5.5",
+          "question_id": "D5.Q4",
+          "scoring_guide": {
+            "3": "Impatto occupazionale valutato, piano reskilling/upskilling definito, allineamento con codice etico verificato.",
+            "2": "Impatto identificato, azioni parzialmente pianificate.",
+            "1": "Impatto non valutato formalmente ma tema riconosciuto.",
+            "0": "Nessuna valutazione di impatto occupazionale o sociale."
+          }
+        },
+        {
+          "id": "D5.C5",
+          "name": "Capability evaluation pre-deploy",
+          "description": "Valutazione capability pericolose prima del deployment.",
+          "weight_pct": 10,
+          "source": "Anthropic Responsible Scaling Policy v3.0 (2026)",
+          "question_id": "D5.Q5",
+          "notes": "Particolarmente rilevante per sistemi AI generativi o ad alta autonomia.",
+          "scoring_guide": {
+            "3": "Capability evaluation strutturata con metodologia definita (red teaming, adversarial testing), risultati documentati.",
+            "2": "Valutazione pianificata ma metodologia non definita.",
+            "1": "Solo testing funzionale standard, nessun focus su capability pericolose.",
+            "0": "Nessuna valutazione pre-deploy. Deploy senza safety testing."
+          }
+        },
+        {
+          "id": "D5.C6",
+          "name": "Sostenibilità ambientale",
+          "description": "Carbon footprint del training e inference, compute efficiency, energia e risorse del data center.",
+          "weight_pct": 10,
+          "source": "ISO/IEC 42001:2023 — Appendice B.5.5",
+          "question_id": "D5.Q6",
+          "scoring_guide": {
+            "3": "Carbon footprint stimato, efficienza compute misurata, obiettivi sostenibilità definiti.",
+            "2": "Stima parziale impatto ambientale, senza obiettivi formali.",
+            "1": "Impatto ambientale non valutato ma tema riconosciuto.",
+            "0": "Nessuna considerazione della sostenibilità ambientale."
+          }
+        }
+      ]
+    },
+    {
+      "id": "D6",
+      "name": "Operational Readiness & Lifecycle Management",
+      "description": "Valuta prontezza operativa per deployment e gestione del sistema AI nel tempo.",
+      "implicit_purpose": "Continuità: il valore del progetto dipende da quanto regge in produzione.",
+      "compiled_by": "MLOps + IT Operations",
+      "criteria": [
+        {
+          "id": "D6.C1",
+          "name": "Monitoring e alerting",
+          "description": "Monitoraggio drift, performance degradation con alert.",
+          "weight_pct": 25,
+          "source": "NIST AI RMF 1.0 — MEASURE 2.4, IBM Guide (2025)",
+          "question_id": "D6.Q1",
+          "scoring_guide": {
+            "3": "Monitoring su drift e performance, alert con soglie documentate e destinatari assegnati, dashboard disponibile.",
+            "2": "Monitoring parziale (es. solo performance, non drift) o soglie non calibrate.",
+            "1": "Monitoring pianificato ma non implementato. Nessun alert attivo.",
+            "0": "Nessun monitoring. Sistema deployato senza visibilità sul comportamento in produzione."
+          }
+        },
+        {
+          "id": "D6.C2",
+          "name": "Piano di retraining",
+          "description": "Piano di retraining documentato con trigger (schedulati o event-driven su drift/degradation), procedure automatizzate di validazione e rollback, governance di versioning dei modelli.",
+          "weight_pct": 20,
+          "source": "ISO/IEC 42001:2023 — Appendice B.6.2.6",
+          "question_id": "D6.Q2",
+          "scoring_guide": {
+            "3": "Piano documentato con trigger multipli, validazione automatizzata, rollback e versioning governance.",
+            "2": "Piano con soli trigger schedulati, senza trigger dinamici su drift o senza rollback automatico.",
+            "1": "Retraining pianificato informalmente, senza trigger definiti.",
+            "0": "Nessun piano di retraining. Modello statico."
+          }
+        },
+        {
+          "id": "D6.C3",
+          "name": "Incident response",
+          "description": "Procedure incident response specifiche con ruoli definiti.",
+          "weight_pct": 20,
+          "source": "Anthropic RSP v3.0 — Sezione 4 (Governance), punto 3",
+          "question_id": "D6.Q3",
+          "scoring_guide": {
+            "3": "Procedure AI-specific documentate, ruoli assegnati, esercitazione condotta. Evidenza: runbook.",
+            "2": "Procedure adattate da IT generali, ruoli assegnati ma non testati.",
+            "1": "Procedure IT generali applicate senza adattamento specifico.",
+            "0": "Nessuna procedura di incident response per il sistema AI."
+          }
+        },
+        {
+          "id": "D6.C4",
+          "name": "Model documentation",
+          "description": "Model card/factsheet con metadati, limitazioni, performance.",
+          "weight_pct": 20,
+          "source": "NIST AI RMF 1.0 — MEASURE 2.4, IBM Guide (2025)",
+          "question_id": "D6.Q4",
+          "scoring_guide": {
+            "3": "Model card/factsheet completa, aggiornata, accessibile agli autorizzati, pronta per audit.",
+            "2": "Documentazione parziale (mancano limitazioni o performance per segmento).",
+            "1": "Documentazione minimale, solo metadati di base.",
+            "0": "Nessuna model card. Sistema documentato solo a livello di codice."
+          }
+        },
+        {
+          "id": "D6.C5",
+          "name": "Ownership e accountability",
+          "description": "Ruoli e responsabilità formalmente assegnati.",
+          "weight_pct": 15,
+          "source": "ISO/IEC 42001:2023 — Clausola 5.3",
+          "question_id": "D6.Q5",
+          "scoring_guide": {
+            "3": "Tutti i ruoli operativi assegnati formalmente (Model Owner, Monitoring Responsible, Retraining Approver), documentati.",
+            "2": "Ruoli principali assegnati, alcuni secondari non formalizzati.",
+            "1": "Responsabilità assegnate informalmente senza documentazione.",
+            "0": "Nessun ruolo formalmente assegnato. Sistema in produzione senza ownership chiara."
+          }
+        }
+      ]
+    }
+  ],
+  "pattern_alerts": {
+    "description": "Pattern di rischio cross-dimensionale. Rilevati automaticamente dopo lo scoring.",
+    "patterns": [
+      {
+        "id": "PA1",
+        "name": "Compliance senza etica sostanziale",
+        "condition": "D2 >= 2.0 AND D5 <= 1.0",
+        "label": "Air Canada pattern",
+        "description": "Compliance formale presente ma nessuna reale valutazione etica. Rischio di decisioni automatizzate dannose legalmente attribuibili all'azienda.",
+        "recommended_action": "Condurre bias assessment e definire HITL prima del deployment."
+      },
+      {
+        "id": "PA2",
+        "name": "Business case su dati non pronti",
+        "condition": "D1 >= 2.0 AND D3 <= 1.0",
+        "label": "IBM Watson pattern",
+        "description": "Forte pressione commerciale/strategica con dati insufficienti. Alta probabilità di promesse non mantenibili.",
+        "recommended_action": "Bloccare o ridurre scope del progetto fino al raggiungimento di D3 >= 1.5."
+      },
+      {
+        "id": "PA3",
+        "name": "Ottimo modello, zero operatività",
+        "condition": "D4 >= 2.0 AND D6 <= 1.0",
+        "label": "Zillow pattern",
+        "description": "Eccellenza tecnica non supportata da governance operativa. Il modello funziona in sviluppo ma fallirà in produzione.",
+        "recommended_action": "Investire in MLOps e definire monitoring, retraining e incident response prima del go-live."
+      },
+      {
+        "id": "PA4",
+        "name": "Stack dati e operatività entrambi immaturi",
+        "condition": "D3 <= 1.0 AND D6 <= 1.0",
+        "label": "NHS PRISM pattern",
+        "description": "Rischio sistemico. I dati non sono pronti e il sistema non è governabile in produzione. Doppio vettore di fallimento.",
+        "recommended_action": "Gate RED obbligatorio. Rework su D3 e D6 prima di qualsiasi deployment."
+      },
+      {
+        "id": "PA5",
+        "name": "Privacy non by-design",
+        "condition": "D2.C2 <= 1 AND D3.C4 <= 1",
+        "label": "Clearview AI pattern",
+        "description": "Nessuna valutazione GDPR e nessuna privacy by design. Rischio di sanzioni e ban normativi.",
+        "recommended_action": "Bloccare progetto. DPIA e privacy by design obbligatorie prima di procedere."
+      },
+      {
+        "id": "PA6",
+        "name": "Vanity AI project",
+        "condition": "D1.C1 <= 1 AND D4.C6 <= 1",
+        "label": "Technology-first pattern",
+        "description": "Problema di business vago e nessun confronto con baseline. Progetto guidato dalla tecnologia, non dal valore.",
+        "recommended_action": "Ridefinire il problem statement e condurre benchmark AI vs soluzione tradizionale."
+      }
+    ]
+  },
+  "scoring_engine": {
+    "description": "Pseudocodice per il calcolo dello score composito e del gate.",
+    "formula": {
+      "criterion_effective_score": "score * confidence_modifier",
+      "dimension_score": "sum(criterion_effective_score * criterion_weight_pct) / sum(criterion_weight_pct) sui soli criteri applicabili (non N/A)",
+      "composite_score": "sum(dimension_score * dimension_weight_pct) / sum(dimension_weight_pct) sulle sole dimensioni valutate e applicabili",
+      "gate_logic": [
+        "IF assessed_dimensions != all_dimensions THEN gate = PARTIAL (provisional_gate calcolato sulle dimensioni valutate)",
+        "IF any_dimension_score < 0.5 THEN gate = RED",
+        "ELSE IF composite_score < 1.0 THEN gate = RED",
+        "ELSE IF composite_score < 2.0 THEN gate = YELLOW",
+        "ELSE gate = GREEN"
+      ]
+    },
+    "post_scoring_checks": [
+      "Evaluate all pattern_alerts",
+      "If EU AI Act = HIGH_RISK AND D5.C3 (HITL) < 2 → add mandatory RED FLAG",
+      "If EU AI Act IN [LIMITED_RISK, HIGH_RISK] AND D5.C2 (Transparency) < 2 → add normative RED FLAG",
+      "If EU AI Act = HIGH_RISK AND D4.C4 (Explainability) < 2 → add normative RED FLAG",
+      "If D4.C6 (AI vs baseline) <= 1 → add Vanity AI warning"
+    ],
+    "skip_condition_syntax": "Le skip_condition sono valutate dall'engine contro i campi di ProjectIntake, nella forma '<campo> == <valore>' o '<campo> != <valore>' (valori: true/false, numeri, stringhe). Se vera, il criterio è proposto come N/A ed escluso dal denominatore della dimensione."
+  },
+  "intake_summary": {
+    "description": "Campi della Project Card generata al termine della Parte 0.",
+    "fields": [
+      "project_name",
+      "use_case_description",
+      "project_owner",
+      "sector",
+      "ai_system_type",
+      "eu_ai_act_level",
+      "project_stage",
+      "user_count_estimate",
+      "vulnerable_subjects",
+      "personal_data_treated",
+      "sensitive_data_treated",
+      "sector_weights_applied",
+      "assessment_date"
+    ]
+  }
+}

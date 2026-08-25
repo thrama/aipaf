@@ -1,0 +1,78 @@
+# =============================================================================
+# AIPAF — AI Project Assessment Framework
+# .gitignore
+# =============================================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+
+# --- Testing & coverage ---
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# --- Type checking ---
+.mypy_cache/
+.ruff_cache/
+
+# --- IDE ---
+.idea/
+.vscode/
+*.swp
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- AIPAF: RAG index (auto-generato da ChromaDB, non versionare) ---
+docs/index/
+
+# --- AIPAF: manifest RAG (auto-generato da ingestor.py; se versionato, un clone
+#     con index/ vuoto salterebbe l'ingestion perche' i checksum coincidono) ---
+docs/manifest.json
+
+# --- AIPAF: documenti aziendali (codici etici, policy interne): MAI nel repo ---
+docs/sources/company/*
+!docs/sources/company/.gitkeep
+!docs/sources/company/README.md
+
+# --- AIPAF: archivio versioni precedenti dei documenti ---
+docs/archive/
+
+# --- AIPAF: output assessment (dati potenzialmente sensibili) ---
+output/
+*.scored.json
+
+# --- AIPAF: API keys ---
+.env
+.env.*
+!.env.example
+
+# --- Ollama (non vanno nel repo) ---
+*.gguf
+Modelfile
+
+# --- Patch e file di lavoro ---
+aipaf-v*-patch.zip
+UPGRADE_*.txt
+global_before.txt
+assessment_*.json
+test_*.json
+
+# --- Backup locale della storia pre-release (mai nel repo) ---
+.git-private/
