@@ -48,7 +48,7 @@ python -m ipykernel install --user --name aipaf --display-name "Python (aipaf)"
 ```
 
 Con `uv`: `uv venv --python 3.12`, poi `uv pip install -e ".[claude,dev,notebook]"`.
-Gli extra sostituiscono `requirements.txt`, mantenuto solo per compatibilità.
+Le dipendenze sono definite solo in `pyproject.toml` (extra `claude`, `dev`, `notebook`).
 
 ---
 
