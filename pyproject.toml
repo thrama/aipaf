@@ -21,12 +21,6 @@ classifiers = [
     "Topic :: Software Development :: Quality Assurance",
 ]
 
-[project.urls]
-Homepage   = "https://github.com/thrama/aipaf"
-Repository = "https://github.com/thrama/aipaf"
-Changelog  = "https://github.com/thrama/aipaf/blob/main/CHANGELOG.md"
-Issues     = "https://github.com/thrama/aipaf/issues"
-
 dependencies = [
     "pydantic>=2.6",
     "typer>=0.12",
@@ -38,6 +32,12 @@ dependencies = [
     "ollama>=0.4",             # richiesto da chromadb OllamaEmbeddingFunction (RAG in produzione)
     "python-dotenv>=1.0",      # carica .env all'avvio di CLI e notebook
 ]
+
+[project.urls]
+Homepage   = "https://github.com/thrama/aipaf"
+Repository = "https://github.com/thrama/aipaf"
+Changelog  = "https://github.com/thrama/aipaf/blob/main/CHANGELOG.md"
+Issues     = "https://github.com/thrama/aipaf/issues"
 
 [project.optional-dependencies]
 notebook = [
