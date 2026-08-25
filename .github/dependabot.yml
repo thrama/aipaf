@@ -1,10 +1,19 @@
 version: 2
 updates:
+  # Dipendenze Python: legge pyproject.toml e uv.lock.
+  # Una sola PR mensile che aggiorna tutto il lock in blocco, non una per pacchetto.
   - package-ecosystem: pip
     directory: "/"
     schedule:
       interval: monthly
+    groups:
+      python-deps:
+        patterns: ["*"]
+
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]

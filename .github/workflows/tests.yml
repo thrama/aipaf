@@ -21,10 +21,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
 
+      # --frozen: usa esattamente le versioni in uv.lock e fallisce se il lock
+      # non e' allineato a pyproject.toml (rigenerarlo con `uv lock` e committarlo).
       - name: Install
-        run: |
-          uv venv
-          uv pip install -e ".[dev,claude]"
+        run: uv sync --extra dev --extra claude --frozen
 
       - name: Lint (ruff)
         run: uv run ruff check aipaf tests
