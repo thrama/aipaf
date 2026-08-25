@@ -486,10 +486,27 @@ class DocumentIngestor:
         checksum = _file_checksum(path)
         filename = path.name
 
+        # Determina collection
+        collection = (
+            self._col_regulatory
+            if source_type == DocumentSource.REGULATORY
+            else self._col_company
+        )
+
         if not force and _is_already_ingested(
             self._manifest, source_type.value, filename, checksum
         ):
-            return None  # già aggiornato, skip
+            # Il manifest dice "aggiornato", ma il manifest e l'indice ChromaDB sono
+            # due artefatti separati: se docs/index/ e' stato cancellato (o il manifest
+            # viene da un altro ambiente) i chunk possono mancare. Verifica l'indice.
+            expected = self._manifest[source_type.value][filename].get("chunk_count", 0)
+            actual   = self._count_file_chunks(collection, filename)
+            if actual > 0 and actual == expected:
+                return None  # già aggiornato, skip
+            print(
+                f"  ⚠ {filename}: manifest aggiornato ma indice incompleto "
+                f"({actual}/{expected} chunk), re-indicizzo"
+            )
 
         # Estrai testo
         raw_text = extract_text(path)
@@ -500,13 +517,6 @@ class DocumentIngestor:
         chunks = chunk_text(raw_text)
         if not chunks:
             return None
-
-        # Determina collection
-        collection = (
-            self._col_regulatory
-            if source_type == DocumentSource.REGULATORY
-            else self._col_company
-        )
 
         # Rimuovi chunk precedenti di questo file (se esistono)
         self._delete_file_chunks(collection, filename)
@@ -596,6 +606,14 @@ class DocumentIngestor:
     # ------------------------------------------------------------------
     # Utility interne
     # ------------------------------------------------------------------
+
+    def _count_file_chunks(self, collection: Collection, filename: str) -> int:
+        """Numero di chunk effettivamente presenti nella collection per questo file."""
+        try:
+            existing = collection.get(where={"filename": filename}, include=[])
+            return len(existing["ids"])
+        except Exception:
+            return 0
 
     def _delete_file_chunks(self, collection: Collection, filename: str) -> bool:
         """Elimina dalla collection tutti i chunk con metadato filename == filename."""

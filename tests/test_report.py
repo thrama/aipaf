@@ -9,8 +9,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pytest
 from aipaf.models import (
-    ApprovalGate, AssessmentSession, ConfidenceLevel, CriterionResponse,
-    EUAIActLevel, NormativeRedFlag, PatternAlert, ProjectIntake, Sector,
+    AssessmentSession, ConfidenceLevel, CriterionResponse,
+    EUAIActLevel, ProjectIntake, Sector,
 )
 from aipaf.engine import ScoringEngine, load_config
 from aipaf.report import ReportGenerator, _bar, _cell, _slugify
@@ -261,7 +261,7 @@ class TestReportV020:
             evidence="riga uno\nriga due | con pipe"))
         session = engine.compute(session)
         md = ReportGenerator().generate(session)
-        row = next(l for l in md.splitlines() if l.startswith("| `D1.C1`"))
+        row = next(line for line in md.splitlines() if line.startswith("| `D1.C1`"))
         assert "riga uno riga due \\| con pipe" in row
 
     def test_cell_helper(self):

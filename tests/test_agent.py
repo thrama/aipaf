@@ -19,7 +19,7 @@ from aipaf.agent import (
     STRUCTURED_RETRIES, AssessmentAgent, LLMOutputError, _validate_criterion, _validate_intake,
 )
 from aipaf.engine import ScoringEngine, load_config
-from aipaf.llm.base import LLMProvider, LLMResponse, Message
+from aipaf.llm.base import LLMProvider, LLMResponse
 from aipaf.models import (
     ApprovalGate, AssessmentSession, ConfidenceLevel, EUAIActLevel, Sector,
 )
@@ -113,14 +113,16 @@ class TestIntake:
         assert agent._history == []                     # e nessuno storico lasciato
 
     def test_bad_sector_raises_after_retry(self, config, engine):
-        bad = json.loads(GOOD_INTAKE); bad["sector"] = "insurance"
+        bad = json.loads(GOOD_INTAKE)
+        bad["sector"] = "insurance"
         agent, prov = make_agent([json.dumps(bad)] * (1 + STRUCTURED_RETRIES), config, engine)
         with pytest.raises(LLMOutputError, match="sector"):
             agent.collect_intake(AssessmentSession(), "x")
         assert len(prov.calls) == 1 + STRUCTURED_RETRIES
 
     def test_bad_eu_level_raises(self, config, engine):
-        bad = json.loads(GOOD_INTAKE); bad["eu_ai_act_level"] = "MEDIUM"
+        bad = json.loads(GOOD_INTAKE)
+        bad["eu_ai_act_level"] = "MEDIUM"
         agent, _ = make_agent([json.dumps(bad)] * (1 + STRUCTURED_RETRIES), config, engine)
         with pytest.raises(LLMOutputError, match="eu_ai_act_level"):
             agent.collect_intake(AssessmentSession(), "x")
@@ -141,13 +143,15 @@ class TestIntake:
 
     def test_case_insensitive_enums(self):
         d = json.loads(GOOD_INTAKE)
-        d["sector"] = "Banking_Finance"; d["eu_ai_act_level"] = "limited_risk"
+        d["sector"] = "Banking_Finance"
+        d["eu_ai_act_level"] = "limited_risk"
         out = _validate_intake(d)
         assert out["sector"] == Sector.BANKING_FINANCE
         assert out["eu_ai_act_level"] == EUAIActLevel.LIMITED_RISK
 
     def test_missing_project_name_raises(self):
-        d = json.loads(GOOD_INTAKE); d["project_name"] = ""
+        d = json.loads(GOOD_INTAKE)
+        d["project_name"] = ""
         with pytest.raises(LLMOutputError, match="project_name"):
             _validate_intake(d)
 

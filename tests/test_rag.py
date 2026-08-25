@@ -182,6 +182,28 @@ class TestDocumentIngestor:
         assert doc1 is not None
         assert doc2 is None  # saltato: checksum identico
 
+    def test_reingest_when_index_lost_but_manifest_current(self, tmp_project, sample_regulatory):
+        """Manifest aggiornato ma chunk assenti dall'indice (es. docs/index/ cancellato,
+        o manifest proveniente da un altro ambiente): l'ingestor deve re-indicizzare,
+        non fidarsi del solo checksum."""
+        index_path    = tmp_project / "docs" / "index"
+        manifest_path = tmp_project / "docs" / "manifest.json"
+        with patch("aipaf.rag.ingestor._INDEX_PATH",    index_path), \
+             patch("aipaf.rag.ingestor._MANIFEST_PATH", manifest_path):
+            ingestor = DocumentIngestor(index_path=index_path, embedding_backend="hash")
+            doc1 = ingestor.ingest_file(sample_regulatory, DocumentSource.REGULATORY)
+            assert doc1 is not None
+            # Simula la perdita dell'indice lasciando intatto il manifest
+            ingestor._delete_file_chunks(ingestor.col_regulatory, sample_regulatory.name)
+            assert ingestor.col_regulatory.count() == 0
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            assert sample_regulatory.name in manifest["regulatory"]
+
+            doc2 = ingestor.ingest_file(sample_regulatory, DocumentSource.REGULATORY)
+        assert doc2 is not None
+        assert doc2.chunk_count == doc1.chunk_count
+        assert ingestor.col_regulatory.count() == doc1.chunk_count
+
     def test_force_reingest(self, tmp_project, sample_regulatory):
         index_path    = tmp_project / "docs" / "index"
         manifest_path = tmp_project / "docs" / "manifest.json"

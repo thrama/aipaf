@@ -2,6 +2,25 @@
 
 Tutte le modifiche rilevanti del progetto. Formato ispirato a [Keep a Changelog](https://keepachangelog.com/it/1.0.0/).
 
+## [0.2.7] — 2026-08-25
+
+### Corretto
+
+- **RAG ingestor: manifest e indice verificati insieme.** `ingest_file` saltava un documento
+  se il checksum coincideva con `docs/manifest.json`, senza controllare che i chunk fossero
+  davvero in ChromaDB. Con `docs/index/` cancellato (o un manifest proveniente da un altro
+  ambiente) il RAG restava vuoto con status "aggiornato". Ora l'ingestor conta i chunk
+  presenti per quel file e re-indicizza se mancano o non tornano con `chunk_count`,
+  con un avviso esplicito. Nuovo test `test_reingest_when_index_lost_but_manifest_current`.
+
+### Modificato
+
+- CI su `uv` (`astral-sh/setup-uv`, cache abilitata, `uv build` per il wheel), in linea con
+  l'ambiente di sviluppo locale.
+- Lint azzerato: `ruff check` e' ora **bloccante** in CI (rimosso `continue-on-error`).
+  Import inutilizzati rimossi nei test, istruzioni multiple su una riga separate,
+  variabili `l` rinominate (`lvl`, `line`). Nessuna modifica funzionale.
+
 ## [0.2.6] — 2026-08-25
 
 ### Preparazione alla pubblicazione su GitHub
@@ -105,7 +124,7 @@ Patch al RAG layer, emersa dal check del repository con i documenti reali in `do
   framework AIPAF criteri, pesi, gate e pattern sono in tabella: del Framework v1.5 venivano
   indicizzati 11k caratteri su 21k, del Questionario 3k su 36k (6 chunk su 76). Ora
   l'estrazione segue l'ordine del documento e include le righe di tabella (celle separate
-  da ` | `, celle unite deduplicate). Dopo l'aggiornamento **re-ingerire i DOCX**
+  da `|`, celle unite deduplicate). Dopo l'aggiornamento **re-ingerire i DOCX**
   (`aipaf rag ingest --force`).
 
 ### Note
@@ -117,7 +136,7 @@ Patch al RAG layer, emersa dal check del repository con i documenti reali in `do
 ## [0.2.0] — 2026-08-24
 
 Release di consolidamento della governance dello scoring, a valle dell'audit del codice.
-Nessuna modifica ai pesi, ai criteri o alle soglie del framework: cambia *come* il tool
+Nessuna modifica ai pesi, ai criteri o alle soglie del framework: cambia _come_ il tool
 gestisce ciò che non sa, non ciò che misura.
 
 ### Comportamenti che cambiano (leggere prima di aggiornare)

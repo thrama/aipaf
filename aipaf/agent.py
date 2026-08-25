@@ -185,7 +185,7 @@ class AssessmentAgent:
         quindi non possono essere dedotti per default.
         """
         sectors = ", ".join(f'"{s.value}"' for s in Sector)
-        levels  = ", ".join(f'"{l.value}"' for l in EUAIActLevel)
+        levels  = ", ".join(f'"{lvl.value}"' for lvl in EUAIActLevel)
         prompt = f"""
 Analizza questa descrizione di progetto AI ed estrai i dati di intake strutturati.
 
@@ -494,7 +494,7 @@ def _validate_intake(data: dict) -> dict:
     except ValueError:
         raise LLMOutputError(
             f"eu_ai_act_level non ammesso: {data.get('eu_ai_act_level')!r} "
-            f"(ammessi: {[l.value for l in EUAIActLevel]})"
+            f"(ammessi: {[lvl.value for lvl in EUAIActLevel]})"
         )
     name = text("project_name", "")
     if not name:
