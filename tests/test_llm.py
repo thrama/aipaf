@@ -5,18 +5,20 @@ Eseguire: python -m pytest tests/test_llm.py -v
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import pytest
 from unittest.mock import MagicMock, patch
 
-from aipaf.llm.base import LLMProvider, LLMResponse, LLMRole, Message
-from aipaf.llm.factory import get_provider, available_providers
+import pytest
 
+from aipaf.llm.base import LLMProvider, LLMResponse, LLMRole, Message
+from aipaf.llm.factory import available_providers, get_provider
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 class MockProvider(LLMProvider):
     """Provider fittizio per test — restituisce sempre la stessa risposta."""
@@ -46,8 +48,8 @@ class MockProvider(LLMProvider):
 # Message e LLMResponse
 # ---------------------------------------------------------------------------
 
-class TestMessage:
 
+class TestMessage:
     def test_to_dict_user(self):
         m = Message(LLMRole.USER, "ciao")
         assert m.to_dict() == {"role": "user", "content": "ciao"}
@@ -58,10 +60,8 @@ class TestMessage:
 
 
 class TestLLMResponse:
-
     def test_total_tokens(self):
-        r = LLMResponse(content="x", model="m", provider="p",
-                        input_tokens=100, output_tokens=50)
+        r = LLMResponse(content="x", model="m", provider="p", input_tokens=100, output_tokens=50)
         assert r.total_tokens == 150
 
     def test_total_tokens_none_if_missing(self):
@@ -73,8 +73,8 @@ class TestLLMResponse:
 # Factory
 # ---------------------------------------------------------------------------
 
-class TestFactory:
 
+class TestFactory:
     def test_available_providers(self):
         providers = available_providers()
         assert "claude" in providers
@@ -86,6 +86,7 @@ class TestFactory:
 
     def test_get_ollama_provider(self):
         from aipaf.llm.ollama_provider import OllamaProvider
+
         p = get_provider("ollama")
         assert isinstance(p, OllamaProvider)
         assert p.provider_name == "ollama"
@@ -98,6 +99,7 @@ class TestFactory:
         with patch.dict("os.environ", {}, clear=True):
             # Rimuove ANTHROPIC_API_KEY se presente
             import os
+
             os.environ.pop("ANTHROPIC_API_KEY", None)
             with pytest.raises((ValueError, ImportError)):
                 get_provider("claude")
@@ -107,8 +109,8 @@ class TestFactory:
 # MockProvider
 # ---------------------------------------------------------------------------
 
-class TestMockProvider:
 
+class TestMockProvider:
     def test_complete_returns_response(self):
         p = MockProvider()
         r = p.complete([Message(LLMRole.USER, "test")])
@@ -123,7 +125,7 @@ class TestMockProvider:
         p = MockProvider()
         p.complete = MagicMock(side_effect=ConnectionError("offline"))
         assert p.health_check() is False
-        assert p.last_error == "ConnectionError: offline"   # il motivo deve restare leggibile
+        assert p.last_error == "ConnectionError: offline"  # il motivo deve restare leggibile
 
     def test_health_check_ok_clears_error(self):
         p = MockProvider(response_text="pong")
@@ -136,10 +138,11 @@ class TestMockProvider:
 # _parse_json (utility di agent.py)
 # ---------------------------------------------------------------------------
 
-class TestParseJson:
 
+class TestParseJson:
     def _parse(self, text: str) -> dict:
         from aipaf.agent import _parse_json
+
         return _parse_json(text)
 
     def test_plain_json(self):
@@ -158,18 +161,21 @@ class TestParseJson:
     def test_no_json_raises(self):
         """Nessun fallback silenzioso: un dict vuoto diventerebbe uno score reale."""
         from aipaf.agent import LLMOutputError
+
         with pytest.raises(LLMOutputError):
             self._parse("nessun JSON qui")
 
     def test_malformed_json_raises(self):
         from aipaf.agent import LLMOutputError
+
         with pytest.raises(LLMOutputError):
             self._parse('{"score": 2, "confidence": }')
 
     def test_json_array_raises(self):
         from aipaf.agent import LLMOutputError
+
         with pytest.raises(LLMOutputError):
-            self._parse('[1, 2, 3]')
+            self._parse("[1, 2, 3]")
 
     def test_nested_json(self):
         result = self._parse('{"score": 2, "meta": {"source": "test"}}')
@@ -180,27 +186,31 @@ class TestParseJson:
 # OllamaProvider (unit, senza server reale)
 # ---------------------------------------------------------------------------
 
-class TestOllamaProvider:
 
+class TestOllamaProvider:
     def test_init_default_model(self):
         from aipaf.llm.ollama_provider import OllamaProvider
+
         p = OllamaProvider()
         assert p.model_name == "llama3.1:8b"
         assert p.provider_name == "ollama"
 
     def test_init_custom_model(self):
         from aipaf.llm.ollama_provider import OllamaProvider
+
         p = OllamaProvider(model="qwen3.5:4b")
         assert p.model_name == "qwen3.5:4b"
 
     def test_complete_connection_error(self):
         from aipaf.llm.ollama_provider import OllamaProvider
+
         p = OllamaProvider(base_url="http://localhost:19999")
         with pytest.raises(ConnectionError):
             p.complete([Message(LLMRole.USER, "test")])
 
     def test_health_check_false_when_offline(self):
         from aipaf.llm.ollama_provider import OllamaProvider
+
         p = OllamaProvider(base_url="http://localhost:19999")
         assert p.health_check() is False
         assert p.model_available() is None
@@ -208,15 +218,17 @@ class TestOllamaProvider:
     def test_complete_timeout_error(self):
         """ReadTimeout non e' ConnectionError: deve emergere come TimeoutError esplicito."""
         import requests
+
         from aipaf.llm.ollama_provider import OllamaProvider
+
         p = OllamaProvider(base_url="http://localhost:19999", timeout=1)
-        with patch("aipaf.llm.ollama_provider.requests.post",
-                   side_effect=requests.exceptions.ReadTimeout("slow")):
+        with patch("aipaf.llm.ollama_provider.requests.post", side_effect=requests.exceptions.ReadTimeout("slow")):
             with pytest.raises(TimeoutError, match="timeout|non ha risposto"):
                 p.complete([Message(LLMRole.USER, "test")])
 
     def test_model_available_false_when_missing(self):
         from aipaf.llm.ollama_provider import OllamaProvider
+
         p = OllamaProvider(model="qwen3.5:4b")
         with patch.object(p, "list_local_models", return_value=["llama3.1:8b"]):
             assert p.model_available() is False
@@ -229,21 +241,24 @@ class TestOllamaProvider:
 # ClaudeProvider (unit, senza API reale)
 # ---------------------------------------------------------------------------
 
-class TestClaudeProvider:
 
+class TestClaudeProvider:
     def _make(self, **env):
         from aipaf.llm import claude_provider as cp
+
         if not cp._ANTHROPIC_AVAILABLE:
             pytest.skip("pacchetto anthropic non installato")
         with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "sk-test", **env}, clear=False):
             for k in ("AIPAF_CLAUDE_MODEL", "AIPAF_CLAUDE_TEMPERATURE"):
                 if k not in env:
                     import os
+
                     os.environ.pop(k, None)
             return cp.ClaudeProvider()
 
     def test_default_model(self):
         from aipaf.llm import claude_provider as cp
+
         p = self._make()
         assert p.model_name == cp._DEFAULT_MODEL
         assert p.temperature_enabled is True
@@ -258,9 +273,9 @@ class TestClaudeProvider:
 
     def test_temperature_auto_fallback(self):
         """Se l'API rifiuta 'temperature', il provider riprova senza e la disabilita."""
-        import anthropic
         p = self._make()
-        fake = MagicMock()
+        import anthropic
+
         fake.content = [MagicMock(text="ok")]
         fake.model = p.model_name
         fake.usage.input_tokens = 1
@@ -268,7 +283,8 @@ class TestClaudeProvider:
         fake.model_dump.return_value = {}
 
         err = anthropic.BadRequestError(
-            message="temperature is not supported", response=MagicMock(status_code=400), body=None)
+            message="temperature is not supported", response=MagicMock(status_code=400), body=None
+        )
         p._client.messages.create = MagicMock(side_effect=[err, fake])
         r = p.complete([Message(LLMRole.USER, "ping")])
         assert r.content == "ok"
