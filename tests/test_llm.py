@@ -276,6 +276,7 @@ class TestClaudeProvider:
         p = self._make()
         import anthropic
 
+        fake = MagicMock()
         fake.content = [MagicMock(text="ok")]
         fake.model = p.model_name
         fake.usage.input_tokens = 1
